@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StudioCut Ultra · Editor de video con IA</title>
+<meta name="description" content="Edita videos con Anya, tu editora IA: ideas virales, efectos, textos e imágenes.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+<style>
+:root{
+  --bg:#0b0816; --panel:#15112a; --panel2:#1d1739; --line:#2f2756;
+  --txt:#efeaff; --mute:#9a90c4; --acc:#8b5cf6; --acc2:#c084fc; --pink:#f472b6; --green:#5eead4;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(1200px 600px at 70% -10%,#2a1a5e55,transparent),var(--bg);color:var(--txt);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;padding:16px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+.app{max-width:1180px;margin:auto;display:grid;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px}
+
+/* barra superior */
+.top{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.15rem;font-style:italic}
+.logo i{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--acc),#3b82f6);font-style:normal}
+.logo small{color:var(--acc2);font-weight:600;display:block;line-height:1;margin-top:-2px}
+.tools{display:flex;gap:6px}
+.tools button{padding:7px 14px;border-radius:10px;background:var(--panel2);color:var(--mute)}
+.tools button[aria-pressed=true]{background:var(--acc);color:#fff}
+.me{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--acc));border:2px solid var(--acc2)}
+
+/* layout principal */
+.main{display:grid;grid-template-columns:230px 1fr 250px;gap:14px}
+.side{padding:14px}
+.side h2{font-size:1rem;margin-bottom:10px}
+.clip{display:block;width:100%;text-align:left;border-radius:10px;overflow:hidden;margin-bottom:8px;border:1px solid transparent;background:var(--panel2)}
+.clip .th{height:62px}
+.clip span{display:block;padding:5px 9px;font-size:.82rem}
+.clip.on,.clip:hover{border-color:var(--acc)}
+
+/* vista previa */
+.preview{position:relative;overflow:hidden;min-height:420px;display:flex;flex-direction:column}
+.preview h1{font-size:.9rem;font-weight:500;text-align:center;padding:10px;color:var(--mute)}
+.screen{flex:1;position:relative;background:linear-gradient(160deg,#1c6e78,#2f9aa0 40%,#e9a7c4);overflow:hidden}
+.screen::before,.screen::after{content:"";position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff9,#f8b4d466 55%,transparent 70%)}
+.screen::before{width:170px;height:170px;left:12%;top:10%;animation:float 7s ease-in-out infinite}
+.screen::after{width:260px;height:260px;right:8%;bottom:-8%;animation:float 9s ease-in-out infinite reverse}
+@keyframes float{50%{transform:translateY(-18px)}}
+.overlay{position:absolute;left:6%;bottom:22%;font:italic 700 1.9rem/1.1 "Segoe Print","Brush Script MT",cursive;color:#fff;text-shadow:0 0 12px var(--pink),0 0 24px var(--pink);z-index:2}
+.controls{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#0008}
+.controls input[type=range]{flex:1;accent-color:var(--acc2)}
+.controls time{font-variant-numeric:tabular-nums;font-size:.85rem;color:var(--mute)}
+
+/* panel derecho */
+.opt{background:var(--panel2);border-radius:12px;padding:12px;margin-bottom:10px}
+.opt label{display:flex;justify-content:space-between;font-weight:600;margin-bottom:8px}
+.opt input{width:100%;accent-color:var(--acc2)}
+.tabs{display:flex;gap:4px;margin-bottom:10px}
+.tabs button{flex:1;padding:6px;border-radius:8px;font-size:.8rem;color:var(--mute);background:var(--panel2)}
+.tabs .on{background:var(--acc);color:#fff}
+
+/* línea de tiempo */
+.timeline{padding:14px;display:grid;gap:8px}
+.track{display:grid;grid-template-columns:54px 1fr;align-items:center;gap:10px}
+.track b{color:var(--mute);font-size:.85rem}
+.lane{position:relative;height:44px;background:var(--panel2);border-radius:10px;overflow:hidden}
+.seg{position:absolute;top:4px;bottom:4px;border-radius:8px}
+.wave{inset:4px 0;background:repeating-linear-gradient(90deg,var(--green) 0 3px,transparent 3px 6px);-webkit-mask:linear-gradient(transparent 10%,#000 30%,#000 70%,transparent 90%);mask:linear-gradient(transparent 10%,#000 30%,#000 70%,transparent 90%);opacity:.8}
+.txt{background:#2a2150;border:1px solid var(--acc);padding:0 10px;display:flex;align-items:center;font-size:.85rem;white-space:nowrap;overflow:hidden}
+.head{position:absolute;top:0;bottom:0;width:2px;background:var(--acc2);left:0;pointer-events:none}
+
+/* Anya */
+.anya{display:grid;grid-template-columns:260px 1fr;overflow:hidden;border-color:var(--acc);box-shadow:0 0 40px #8b5cf633}
+.portrait{background:linear-gradient(180deg,#3b2a78,#14102a);display:grid;place-items:end center;min-height:300px}
+.portrait svg{width:100%;max-width:240px}
+.chat{padding:18px;display:flex;flex-direction:column;gap:12px}
+.chat h2{font-size:1.2rem}.chat h2 em{color:var(--acc2);font-style:normal;font-weight:500}
+.log{display:flex;flex-direction:column;gap:8px;max-height:200px;overflow:auto}
+.msg{padding:10px 14px;border-radius:12px;background:var(--panel2);max-width:92%}
+.msg.me{align-self:flex-end;background:var(--acc)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.actions button{text-align:left;padding:10px 14px;border-radius:12px;background:var(--panel2);border:1px solid var(--line)}
+.actions button:hover{border-color:var(--acc2)}
+.vbox{display:none;grid-template-columns:1fr 1fr;gap:8px;align-items:center;background:var(--panel2);border-radius:12px;padding:10px;font-size:.85rem;color:var(--mute)}
+.vbox.on{display:grid}
+.vbox select{width:100%;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px}
+.vbox input{width:100%;accent-color:var(--acc2)}
+.vbox .full{grid-column:1/-1}
+.send{display:flex;gap:8px;border:1px solid var(--acc);border-radius:14px;padding:6px;box-shadow:0 0 20px #8b5cf644}
+.send input{flex:1;background:none;border:0;color:var(--txt);padding:0 10px;font:inherit}
+.send button{background:var(--acc);border-radius:10px;padding:8px 16px;font-weight:600}
+
+.feat{display:flex;flex-wrap:wrap;justify-content:space-around;gap:12px;padding:14px;color:var(--mute)}
+.feat strong{color:var(--txt)}
+footer{text-align:center;color:var(--mute);font-size:.8rem;padding:6px}
+
+
+/* Nova: buscador de recursos */
+.nova{padding:18px;display:grid;gap:12px;border-color:#38bdf8;box-shadow:0 0 40px #38bdf822}
+.nova h2{font-size:1.2rem}.nova h2 em{color:#7dd3fc;font-style:normal;font-weight:500}
+.nova .sf{display:flex;gap:8px;border:1px solid #38bdf8;border-radius:14px;padding:6px}
+.nova .sf input{flex:1;background:none;border:0;color:var(--txt);padding:0 10px;font:inherit}
+.nova .sf button{background:#0ea5e9;border-radius:10px;padding:8px 16px;font-weight:600;color:#04121f}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{padding:6px 12px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);font-size:.85rem}
+.chips button[aria-pressed=true]{background:#0ea5e9;color:#04121f;border-color:#0ea5e9}
+.res{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.rc{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:6px}
+.rc small{color:var(--mute)}
+.rc a,.live a{color:#7dd3fc;text-decoration:none;font-weight:600}
+.rc a:hover,.live a:hover{text-decoration:underline}
+.live{background:var(--panel2);border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+.note{color:var(--mute);font-size:.8rem}
+
+@media(max-width:900px){
+  .main{grid-template-columns:1fr}.side{order:2}.preview{min-height:300px}
+  .anya{grid-template-columns:1fr}.portrait{min-height:160px;max-height:200px}
+  .tools{display:none}
+}
+@media(prefers-reduced-motion:reduce){.screen::before,.screen::after{animation:none}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="card top">
+    <div class="logo"><i>▶</i><div>StudioCut<small>Ultra</small></div></div>
+    <div class="tools" role="toolbar" aria-label="Herramientas">
+      <button aria-pressed="true">Mover</button><button aria-pressed="false">Texto</button>
+      <button aria-pressed="false">Formas</button><button aria-pressed="false">Efectos</button>
+    </div>
+    <div class="me" role="img" aria-label="Tu perfil"></div>
+  </header>
+
+  <div class="main">
+    <aside class="card side">
+      <h2>Proyecto</h2>
+      <button class="clip on"><div class="th" style="background:linear-gradient(#7dd3fc,#fde68a)"></div><span>Ideas de texto</span></button>
+      <button class="clip"><div class="th" style="background:linear-gradient(135deg,#1d4ed8,#38bdf8)"></div><span>Audio y efectos</span></button>
+      <button class="clip"><div class="th" style="background:linear-gradient(135deg,#f59e0b,#fde68a)"></div><span>Video generado</span></button>
+      <button class="clip"><div class="th" style="background:linear-gradient(135deg,#ec4899,#60a5fa)"></div><span>Medusas B-roll</span></button>
+    </aside>
+
+    <section class="card preview" aria-label="Vista previa">
+      <h1>Medusas en el mar</h1>
+      <div class="screen"><div class="overlay" id="overlay">¡Haz que<br>tus videos<br>triunfen! ♡</div></div>
+      <div class="controls">
+        <button id="play" aria-label="Reproducir">▶</button>
+        <input id="seek" type="range" min="0" max="100" value="0" aria-label="Posición">
+        <time id="time">00:00 / 00:40</time>
+      </div>
+    </section>
+
+    <aside class="card side">
+      <div class="tabs"><button class="on">Video</button><button>Animación</button><button>Tracking</button></div>
+      <div class="opt"><label for="vol">Volumen <span id="volv">75%</span></label><input id="vol" type="range" min="0" max="100" value="75"></div>
+      <div class="opt"><label>Fondo</label><small style="color:var(--mute)">Curvas · HSL · Rueda de color</small></div>
+    </aside>
+  </div>
+
+  <section class="card timeline" aria-label="Línea de tiempo">
+    <div class="track"><b>V1</b><div class="lane">
+      <div class="seg" style="left:1%;width:17%;background:linear-gradient(#fcd34d,#7dd3fc)"></div>
+      <div class="seg" style="left:20%;width:20%;background:linear-gradient(135deg,#1d4ed8,#38bdf8)"></div>
+      <div class="seg" style="left:42%;width:35%;background:linear-gradient(135deg,#f9a8d4,#a78bfa)"></div>
+    </div></div>
+    <div class="track"><b>A1</b><div class="lane"><div class="seg wave" style="left:1%;right:1%"></div></div></div>
+    <div class="track"><b>T1</b><div class="lane"><div class="seg txt" style="left:1%;width:60%">T Texto: Mike, ¡afinemos esta secuencia!</div></div></div>
+    <div class="track"><b></b><div class="lane" style="height:0;background:none"><div class="head" id="head" style="height:150px;top:-150px"></div></div></div>
+  </section>
+
+  <section class="card anya" aria-label="Anya, editora IA">
+    <div class="portrait">
+      <!-- Para usar una imagen propia: <img src="anya.jpg" alt="Anya"> -->
+      <svg viewBox="0 0 200 250" role="img" aria-label="Avatar de Anya">
+        <defs>
+          <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c2d12"/><stop offset=".5" stop-color="#b45309"/><stop offset="1" stop-color="#78350f"/></linearGradient>
+          <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d2b8"/><stop offset="1" stop-color="#e8b794"/></linearGradient>
+        </defs>
+        <path d="M38 90c-6-60 30-84 62-84s68 24 62 84c-2 40 10 70 20 110H18c10-40 22-70 20-110z" fill="url(#hair)"/>
+        <path d="M22 250c2-48 34-70 78-70s76 22 78 70z" fill="#111"/>
+        <path d="M70 180c10 18 50 18 60 0l6 20c-14 16-58 16-72 0z" fill="url(#skin)"/>
+        <rect x="88" y="150" width="24" height="36" rx="10" fill="url(#skin)"/>
+        <ellipse cx="100" cy="102" rx="43" ry="52" fill="url(#skin)"/>
+        <path d="M57 92c4-34 30-46 58-40 22 4 30 22 28 40-12-22-34-30-52-28-16 2-28 12-34 28z" fill="url(#hair)"/>
+        <g fill="none" stroke="#2b1b17" stroke-width="3.5"><rect x="64" y="90" width="29" height="22" rx="9"/><rect x="107" y="90" width="29" height="22" rx="9"/><path d="M93 99h14"/></g>
+        <ellipse cx="78.500" cy="101" rx="5" ry="5.500" fill="#3b2314"/><ellipse cx="121.500" cy="101" rx="5" ry="5.500" fill="#3b2314"/>
+        <circle cx="80" cy="99" r="1.600" fill="#fff"/><circle cx="123" cy="99" r="1.600" fill="#fff"/>
+        <path d="M66 86q12-8 26-2M108 84q14-6 26 2" stroke="#4a2a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M100 106v14" stroke="#d9a07c" stroke-width="2.500" stroke-linecap="round"/>
+        <path d="M84 134q16 12 32 0q-6 12-16 12t-16-12z" fill="#c2415d"/>
+        <circle cx="100" cy="196" r="3.500" fill="#c084fc"/>
+        <path d="M100 168v26" stroke="#c084fc" stroke-width="1.500"/>
+      </svg>
+    </div>
+    <div class="chat">
+      <h2>✨ Anya <em>· Editora IA</em></h2>
+      <div class="log" id="log" aria-live="polite">
+        <div class="msg">¡Hola! Soy Anya 💜 ¿Qué quieres crear hoy? Te doy ideas y te ayudo a editar como un profesional.</div>
+      </div>
+      <div class="actions">
+        <button data-q="Generar texto">T &nbsp;Generar texto</button>
+        <button data-q="Generar imágenes">🖼 &nbsp;Generar imágenes</button>
+        <button data-q="Ideas virales para mi video">💡 &nbsp;Ideas virales</button>
+        <button data-q="Efectos y transiciones">✨ &nbsp;Efectos y transiciones</button>
+        <button data-q="Optimizar para redes">🚀 &nbsp;Optimizar para redes</button>
+        <button id="voice" aria-pressed="false">🎙 &nbsp;Voz: <span>apagada</span></button>
+      </div>
+      <div class="vbox" id="vbox">
+        <label>Voz (español)<select id="vsel" aria-label="Voz"></select></label>
+        <label>Estilo<select id="vstyle" aria-label="Estilo de voz">
+          <option value="natural">Natural</option><option value="calida">Cálida y suave</option><option value="sexy" selected>Natural y sexy 💜</option><option value="viva">Viva y alegre</option></select></label>
+        <label class="full">Velocidad: <b id="vrate">1.0x</b><input id="vspeed" type="range" min="0.6" max="1.4" step="0.1" value="1"></label>
+      </div>
+      <form class="send" id="form">
+        <input id="inp" placeholder="Escribe a Anya…" aria-label="Mensaje para Anya" autocomplete="off">
+        <button type="submit">Enviar</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="card nova" aria-label="Nova, buscadora de recursos">
+    <h2>🔎 Nova <em>· Buscadora de recursos</em></h2>
+    <form class="sf" id="sform">
+      <input id="sq" placeholder="Busca filtros, efectos, plantillas, audios…" aria-label="Buscar recursos" autocomplete="off">
+      <button type="submit">Buscar</button>
+    </form>
+    <div class="chips" id="plat" role="group" aria-label="Plataforma"></div>
+    <div class="live" id="live" aria-live="polite"></div>
+    <div class="res" id="res"></div>
+    <p class="note">Los enlaces «en vivo» abren la búsqueda real de cada plataforma, así que siempre muestran lo más nuevo. Las sugerencias de abajo salen de la lista <code>RECURSOS</code> del código: edítala cuando quieras.</p>
+  </section>
+
+  <div class="card feat">
+    <span>⚡ <strong>Edición inteligente</strong></span>
+    <span>👑 <strong>Resultados profesionales</strong></span>
+    <span>💜 <strong>100% creativa</strong></span>
+  </div>
+  <footer>StudioCut Ultra · demo estática</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const replies={
+  "Generar texto":"Prueba este título: «3 trucos que cambiarán tus videos». ¿Quieres otra versión más corta?",
+  "Generar imágenes":"Describe la escena y la preparo: por ejemplo, «medusas rosas en el océano, luz suave».",
+  "Ideas virales para mi video":"1) Empieza con una pregunta en los primeros 2 s. 2) Usa subtítulos grandes. 3) Cierra con un giro inesperado.",
+  "Efectos y transiciones":"Te recomiendo un fundido suave entre clips y un zoom lento en el plano de las medusas.",
+  "Optimizar para redes":"Formato vertical 9:16, duración de 15–30 s y subtítulos activados. ¿Lo ajusto?"
+};
+function say(t,me){const d=document.createElement('div');d.className='msg'+(me?' me':'');d.textContent=t;$('#log').append(d);$('#log').scrollTop=1e9;if(!me)speak(t)}
+function ask(q){say(q,true);setTimeout(()=>say(replies[q]||"¡Buena idea! Lo anoto y te propongo opciones para tu secuencia. 💜"),500)}
+document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>ask(b.dataset.q));
+$('#form').onsubmit=e=>{e.preventDefault();const v=$('#inp').value.trim();if(v){ask(v);$('#inp').value=''}};
+// ---- Voz de Anya (Web Speech API del navegador) ----
+let voiceOn=false,voices=[];
+const synth=window.speechSynthesis;
+const STYLES={natural:{r:1,p:1},calida:{r:.88,p:.95},sexy:{r:.8,p:.78},viva:{r:1.08,p:1.12}};
+function loadVoices(){
+  if(!synth)return;
+  const pref=/m[oó]nica|paulina|helena|laura|elvira|lucia|luc[ií]a|marisol|google espa/i;
+  voices=synth.getVoices().filter(v=>/^es/i.test(v.lang)).sort((a,b)=>
+    (/es-ES/i.test(b.lang)-/es-ES/i.test(a.lang))||(pref.test(b.name)-pref.test(a.name)));
+  $('#vsel').innerHTML=voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('')||'<option>No hay voces en español en este dispositivo</option>';
+}
+if(synth){loadVoices();synth.onvoiceschanged=loadVoices}
+function speak(t){
+  if(!voiceOn||!synth||!voices.length)return;
+  synth.cancel();
+  const u=new SpeechSynthesisUtterance(t.replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu,''));
+  const st=STYLES[$('#vstyle').value];
+  u.voice=voices[+$('#vsel').value]||voices[0];u.lang=u.voice.lang;
+  u.rate=st.r*(+$('#vspeed').value);u.pitch=st.p;
+  synth.speak(u);
+}
+$('#vspeed').oninput=e=>$('#vrate').textContent=(+e.target.value).toFixed(1)+'x';
+$('#voice').onclick=e=>{
+  const b=e.currentTarget;
+  if(!synth){say('Tu navegador no admite voz.');return}
+  voiceOn=b.getAttribute('aria-pressed')!=='true';
+  b.setAttribute('aria-pressed',voiceOn);b.querySelector('span').textContent=voiceOn?'activada':'apagada';
+  $('#vbox').classList.toggle('on',voiceOn);
+  if(voiceOn)speak('Hola, soy Anya. ¿Qué quieres crear hoy?');else synth.cancel();
+};
+$('#vol').oninput=e=>$('#volv').textContent=e.target.value+'%';
+document.querySelectorAll('.clip').forEach(c=>c.onclick=()=>{document.querySelectorAll('.clip').forEach(x=>x.classList.remove('on'));c.classList.add('on')});
+document.querySelectorAll('.tools button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tools button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true')});
+// reproductor simulado
+let t=0,timer=null;const total=40;
+function draw(){const p=t/total*100;$('#seek').value=p;$('#head').style.left=p+'%';
+  const f=n=>String(n).padStart(2,'0');$('#time').textContent=`00:${f(Math.floor(t))} / 00:${total}`}
+$('#play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('#play').textContent='▶';return}
+  $('#play').textContent='⏸';timer=setInterval(()=>{t=(t+.25)%total;draw()},250)};
+$('#seek').oninput=e=>{t=e.target.value/100*total;draw()};
+
+// ---- Nova: buscador de recursos ----
+const PLATS={
+  TikTok:q=>'https://www.tiktok.com/search?q='+encodeURIComponent(q+' effect'),
+  Instagram:q=>'https://www.instagram.com/explore/tags/'+encodeURIComponent(q.replace(/\s+/g,'').toLowerCase())+'/',
+  CapCut:q=>'https://www.google.com/search?q='+encodeURIComponent('site:capcut.com template '+q),
+  YouTube:q=>'https://www.youtube.com/results?search_query='+encodeURIComponent(q+' tutorial')+'&sp=CAI%253D',
+  Pinterest:q=>'https://www.pinterest.com/search/pins/?q='+encodeURIComponent(q)
+};
+// Edita esta lista para añadir o quitar sugerencias
+const RECURSOS=[
+  {n:'Filtro glow suave',p:'TikTok',t:'glow filter'},
+  {n:'Efecto cámara retro VHS',p:'TikTok',t:'vhs effect'},
+  {n:'Filtros estéticos para reels',p:'Instagram',t:'instagram filters aesthetic'},
+  {n:'Plantillas de transiciones rápidas',p:'CapCut',t:'transition'},
+  {n:'Plantilla de beat sync',p:'CapCut',t:'beat sync'},
+  {n:'Subtítulos animados',p:'YouTube',t:'animated captions'},
+  {n:'Paletas y looks cinematográficos',p:'Pinterest',t:'cinematic color grading'},
+  {n:'Efecto de zoom y shake',p:'TikTok',t:'zoom shake effect'}
+];
+let plat='Todas';
+const names=['Todas',...Object.keys(PLATS)];
+function render(){
+  const q=$('#sq').value.trim();
+  $('#plat').innerHTML='';
+  names.forEach(n=>{const b=document.createElement('button');b.type='button';b.textContent=n;b.setAttribute('aria-pressed',n===plat);b.onclick=()=>{plat=n;render()};$('#plat').append(b)});
+  const live=$('#live');live.innerHTML='';
+  if(q){live.append(Object.assign(document.createElement('span'),{textContent:'Buscar «'+q+'» en vivo:'}));
+    Object.keys(PLATS).filter(k=>plat==='Todas'||k===plat).forEach(k=>{const a=document.createElement('a');a.href=PLATS[k](q);a.target='_blank';a.rel='noopener';a.textContent=k;live.append(a)})}
+  else live.textContent='Escribe qué buscas y te llevo a los resultados más recientes de cada plataforma.';
+  const list=RECURSOS.filter(r=>(plat==='Todas'||r.p===plat)&&(!q||(r.n+' '+r.t).toLowerCase().includes(q.toLowerCase())));
+  $('#res').innerHTML='';
+  list.forEach(r=>{const d=document.createElement('div');d.className='rc';
+    d.innerHTML='<strong></strong><small></small><a target="_blank" rel="noopener">Ver en vivo</a>';
+    d.querySelector('strong').textContent=r.n;d.querySelector('small').textContent=r.p;
+    d.querySelector('a').href=PLATS[r.p](r.t);$('#res').append(d)});
+  if(!list.length)$('#res').textContent='Sin sugerencias guardadas; usa los enlaces en vivo de arriba.';
+}
+$('#sform').onsubmit=e=>{e.preventDefault();render()};
+render();
+</script>
+</body>
+</html>
