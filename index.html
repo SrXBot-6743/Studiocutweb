@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudioCut Ultra — Editor IA</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+:root{--bg:#080a0f;--panel:#121622;--line:#232a3d;--text:#f3f5fb;--purple:#9b7cff;--cyan:#5de1df;--pink:#ff7fc8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,sans-serif;height:100vh;overflow:hidden}
+.app{height:100vh;display:grid;grid-template-rows:60px 1fr 240px;gap:8px;padding:8px}
+.topbar,.panel,.timeline{background:#111522;border:1px solid var(--line);border-radius:14px}
+.topbar{display:flex;align-items:center;padding:0 16px;gap:15px}
+.brand{font-weight:800;font-size:16px;display:flex;align-items:center;gap:8px}.brand span{color:var(--purple)}
+.workspace{display:grid;grid-template-columns:260px 1fr 340px;gap:8px;min-height:0}
+.panel{display:flex;flex-direction:column;overflow:hidden}
+.panel-head{height:44px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;letter-spacing:1px}
+.preview-stage{flex:1;background:#05070a;display:grid;place-items:center;position:relative}
+.video-frame{width:88%;aspect-ratio:16/9;background:#181d2c;border:1px solid #333d54;border-radius:10px;display:grid;place-items:center}
+.assistant-card{margin:10px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#1e1836,#121726);border:1px solid #4a3b75;display:flex;gap:12px;align-items:center;cursor:pointer;transition:.2s}
+.assistant-card:hover{border-color:var(--purple);transform:translateY(-1px)}
+.avatar{width:56px;height:56px;border-radius:12px;object-fit:cover;border:2px solid var(--purple)}
+.anya-panel{border:1px solid #7952f5;background:linear-gradient(145deg,#171329,#0d111a);padding:14px;border-radius:16px;margin:10px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:calc(100% - 20px)}
+.btn{background:linear-gradient(110deg,#8e70f4,#6c58cb);border:0;color:white;padding:10px;border-radius:8px;font-weight:700;cursor:pointer;font-size:11px}
+.timeline{padding:10px;display:flex;flex-direction:column;gap:8px}
+.track{height:36px;background:#181e2e;border-radius:6px;display:flex;align-items:center;padding:0 10px;font-size:10px;color:#a0abcf}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">✦ StudioCut <span>Ultra</span></div>
+    <div style="margin-left:auto;display:flex;gap:10px">
+      <button class="btn" onclick="alert('Proyecto guardado con éxito')">Guardar</button>
+      <button class="btn" style="background:linear-gradient(110deg,#5de1df,#35a8a6)">↗ Exportar</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="panel">
+      <div class="panel-head">RECURSOS & IA</div>
+      <div class="assistant-card" onclick="alert('Nova IA: Seleccionando recursos y plantillas virales.')">
+        <img src="nova.png" class="avatar" alt="Nova">
+        <div>
+          <b style="font-size:12px;display:block">Nova · Creative Scout</b>
+          <small style="color:#b2b8d0;font-size:10px">Gestión de recursos y estilo</small>
+        </div>
+      </div>
+      <div style="padding:10px;font-size:11px;color:#8a94b0">
+        <b>Biblioteca de clips</b>
+        <div style="margin-top:8px;padding:8px;background:#161c2c;border-radius:8px;border:1px dashed #2d3852;text-align:center">Arrastra archivos aquí</div>
+      </div>
+    </aside>
+
+    <section class="panel">
+      <div class="preview-stage">
+        <div class="video-frame">
+          <span style="font-size:12px;color:#8a94b0">Vista previa del proyecto · 1080p 30FPS</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="panel-head">ASISTENTE PRINCIPAL</div>
+      <div class="anya-panel">
+        <div style="display:flex;gap:10px;align-items:center">
+          <img src="anya.png" class="avatar" alt="Anya">
+          <div>
+            <b style="font-size:13px">Anya · Editora IA</b>
+            <small style="display:block;color:#a8b3d6;font-size:9px">Asistente principal</small>
+          </div>
+        </div>
+        <p style="font-size:11px;line-height:1.4;margin:4px 0">¡Hola! Soy Anya. ¿Qué quieres crear hoy? Te ayudo a editar como una profesional.</p>
+        <button class="btn">Ideas virales para tus Reels</button>
+        <button class="btn" style="background:#202738;border:1px solid #3b4666">Efectos y transiciones</button>
+        <button class="btn" style="background:#202738;border:1px solid #3b4666">Optimizar video</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="timeline">
+    <div class="track">V1 | Clip_Principal_4K.mp4</div>
+    <div class="track">A1 | Soundtrack_Audio.wav</div>
+  </footer>
+</div>
+</body>
+</html>
